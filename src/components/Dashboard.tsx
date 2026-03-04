@@ -1,8 +1,8 @@
 import { useApp } from "@/contexts/AppContext";
-import { MEALS, ALERT_MAP, fmtDate, today } from "@/lib/data";
+import { MEALS, ALERT_MAP, fmtDate, today, extractKcal } from "@/lib/data";
 
 export default function Dashboard() {
-  const { records } = useApp();
+  const { records, metaKcal } = useApp();
   const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
   const totAl = records.reduce((s, r) => s + (r.alertas?.length || 0), 0);
   const avgAc = records.length ? Math.round(records.reduce((s, r) => s + r.aceitacao, 0) / records.length) : 0;
@@ -11,6 +11,13 @@ export default function Dashboard() {
 
   const pesos = records.filter((r) => r.peso).map((r) => ({ date: r.date, peso: r.peso! })).sort((a, b) => a.date.localeCompare(b.date));
   const last7 = sorted.slice(0, 7).reverse();
+
+  // Caloric data per record
+  const kcalPerRecord = sorted.map((r) => {
+    const total = MEALS.reduce((sum, m) => sum + extractKcal(r.meals[m.key] || ""), 0);
+    return { ...r, totalKcal: total };
+  });
+  const metaAvg = (metaKcal.min + metaKcal.max) / 2;
 
   const alU: Record<string, number> = {};
   records.forEach((r) => (r.alertas || []).forEach((a) => (alU[a] = (alU[a] || 0) + 1)));
@@ -67,7 +74,50 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Peso */}
+      {/* Kcal Meta */}
+      <div className="bg-card rounded-2xl p-4 border border-border">
+        <div className="text-sm font-extrabold text-primary mb-3">🔥 Meta Calórica — Últimos registros</div>
+        <div className="text-[11px] text-muted-foreground mb-3">Meta: {metaKcal.min}–{metaKcal.max} kcal/dia</div>
+        <div className="flex flex-col gap-2">
+          {kcalPerRecord.slice(0, 7).map((r) => {
+            const diff = r.totalKcal - metaAvg;
+            const pct = metaKcal.max > 0 ? Math.min((r.totalKcal / metaKcal.max) * 100, 120) : 0;
+            const inRange = r.totalKcal >= metaKcal.min && r.totalKcal <= metaKcal.max;
+            const below = r.totalKcal < metaKcal.min;
+            const above = r.totalKcal > metaKcal.max;
+            const barColor = inRange ? "bg-primary-light" : below ? "bg-warning" : "bg-destructive";
+            const textColor = inRange ? "text-primary-light" : below ? "text-warning" : "text-destructive";
+            return (
+              <div key={r.id} className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground w-[52px] shrink-0">{fmtDate(r.date).slice(0, 5)}</span>
+                <div className="flex-1 h-5 rounded-full bg-border overflow-hidden relative">
+                  <div className={`h-full rounded-full ${barColor} opacity-80 transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                  {/* Meta range indicator */}
+                  <div className="absolute top-0 h-full border-l-2 border-dashed border-muted-foreground/40" style={{ left: `${(metaKcal.min / metaKcal.max) * 100}%` }} />
+                  <div className="absolute top-0 h-full border-l-2 border-dashed border-muted-foreground/40" style={{ left: `100%` }} />
+                </div>
+                <div className="flex flex-col items-end min-w-[80px]">
+                  <span className={`text-[11px] font-extrabold ${textColor}`}>{r.totalKcal} kcal</span>
+                  <span className={`text-[9px] font-bold ${textColor}`}>
+                    {inRange ? "✅ Na meta" : below ? `⚠ Faltam ${metaKcal.min - r.totalKcal}` : `🔴 Excesso +${r.totalKcal - metaKcal.max}`}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {kcalPerRecord.length > 0 && (() => {
+          const avgKcal = Math.round(kcalPerRecord.reduce((s, r) => s + r.totalKcal, 0) / kcalPerRecord.length);
+          const inRange = avgKcal >= metaKcal.min && avgKcal <= metaKcal.max;
+          const below = avgKcal < metaKcal.min;
+          return (
+            <div className={`mt-3 p-2.5 px-3.5 rounded-xl text-xs font-bold ${inRange ? "bg-primary-light/10 text-primary-light" : below ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"}`}>
+              Média: {avgKcal} kcal/dia — {inRange ? "✅ Dentro da meta" : below ? `⚠ Abaixo da meta (faltam ${metaKcal.min - avgKcal} kcal)` : `🔴 Acima da meta (+${avgKcal - metaKcal.max} kcal)`}
+            </div>
+          );
+        })()}
+      </div>
+
       {pesos.length > 0 && (
         <div className="bg-card rounded-2xl p-4 border border-border">
           <div className="text-sm font-extrabold text-primary mb-3">⚖️ Evolução do Peso</div>
