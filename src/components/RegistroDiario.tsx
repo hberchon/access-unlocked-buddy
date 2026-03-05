@@ -5,7 +5,7 @@ import { getCardapioStrings } from "@/lib/store";
 import { toast } from "sonner";
 
 export default function RegistroDiario() {
-  const { currentUser, records, setRecords, cardapio } = useApp();
+  const { currentUser, records, cardapio, saveRecord } = useApp();
   const cardStrings = getCardapioStrings(cardapio);
 
   const existing = records.find((r) => r.date === today() && r.caregiver === currentUser?.name);
@@ -21,9 +21,9 @@ export default function RegistroDiario() {
   const [uriQ, setUriQ] = useState(existing?.urina?.qtd || 0);
   const [uriO, setUriO] = useState(existing?.urina?.obs || "");
 
-  const save = () => {
+  const save = async () => {
     const data = {
-      id: existing?.id || Date.now(),
+      id: existing?.id || 0,
       date: today(),
       caregiver: currentUser!.name,
       meals,
@@ -37,12 +37,12 @@ export default function RegistroDiario() {
       alertas: [] as string[],
     };
     data.alertas = calcAlerts(data);
-    const idx = records.findIndex((r) => r.date === today() && r.caregiver === currentUser?.name);
-    const newRecs = [...records];
-    if (idx >= 0) newRecs[idx] = data;
-    else newRecs.push(data);
-    setRecords(newRecs);
-    toast.success("✅ Registro salvo com sucesso!");
+    try {
+      await saveRecord(data);
+      toast.success("✅ Registro salvo com sucesso!");
+    } catch (e) {
+      toast.error("Erro ao salvar registro.");
+    }
   };
 
   const liqColor = liquidos >= 1500 ? "text-primary-light" : "text-destructive";
