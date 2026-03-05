@@ -14,7 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_users: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          password: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          password: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          password?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      cardapio: {
+        Row: {
+          descricao: string
+          id: number
+          kcal: number
+          meal_key: string
+        }
+        Insert: {
+          descricao: string
+          id?: number
+          kcal?: number
+          meal_key: string
+        }
+        Update: {
+          descricao?: string
+          id?: number
+          kcal?: number
+          meal_key?: string
+        }
+        Relationships: []
+      }
+      records: {
+        Row: {
+          aceitacao: number
+          alertas: string[] | null
+          caregiver: string
+          created_at: string
+          date: string
+          degluticao: string | null
+          fezes: Json
+          humor: string | null
+          id: number
+          liquidos: number
+          meals: Json
+          peso: number | null
+          urina: Json
+        }
+        Insert: {
+          aceitacao?: number
+          alertas?: string[] | null
+          caregiver: string
+          created_at?: string
+          date: string
+          degluticao?: string | null
+          fezes?: Json
+          humor?: string | null
+          id?: number
+          liquidos?: number
+          meals?: Json
+          peso?: number | null
+          urina?: Json
+        }
+        Update: {
+          aceitacao?: number
+          alertas?: string[] | null
+          caregiver?: string
+          created_at?: string
+          date?: string
+          degluticao?: string | null
+          fezes?: Json
+          humor?: string | null
+          id?: number
+          liquidos?: number
+          meals?: Json
+          peso?: number | null
+          urina?: Json
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -5,7 +5,7 @@ import { getCardapioStrings } from "@/lib/store";
 import { toast } from "sonner";
 
 export default function AdminPanel() {
-  const { currentUser, users, setUsers, records, setRecords } = useApp();
+  const { currentUser, users, setUsers, records, setRecords, saveRecord, deleteRecord } = useApp();
   const cardStrings = getCardapioStrings(useApp().cardapio);
 
   const [showNewUser, setShowNewUser] = useState(false);
@@ -94,7 +94,7 @@ export default function AdminPanel() {
     setErUriQ(r.urina?.qtd || 0); setErUriO(r.urina?.obs || "");
   };
 
-  const saveEditRec = () => {
+  const saveEditRec = async () => {
     if (editRecId === null) return;
     const data = {
       id: editRecId, date: erDate, caregiver: erCare, meals: erMeals,
@@ -105,16 +105,24 @@ export default function AdminPanel() {
       alertas: [] as string[],
     };
     data.alertas = calcAlerts(data);
-    setRecords(records.map((r) => r.id === editRecId ? data : r));
-    setEditRecId(null);
-    toast.success("✅ Registro atualizado!");
+    try {
+      await saveRecord(data);
+      setEditRecId(null);
+      toast.success("✅ Registro atualizado!");
+    } catch {
+      toast.error("Erro ao salvar.");
+    }
   };
 
-  const deleteRec = (id: number) => {
+  const deleteRec = async (id: number) => {
     const r = records.find((rec) => rec.id === id);
     if (!r || !confirm(`Excluir registro de ${fmtDate(r.date)}?`)) return;
-    setRecords(records.filter((rec) => rec.id !== id));
-    toast("🗑️ Registro excluído.");
+    try {
+      await deleteRecord(id);
+      toast("🗑️ Registro excluído.");
+    } catch {
+      toast.error("Erro ao excluir.");
+    }
   };
 
   const InputField = ({ label, children }: { label: string; children: React.ReactNode }) => (
