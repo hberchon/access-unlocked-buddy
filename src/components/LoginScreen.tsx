@@ -6,11 +6,14 @@ export default function LoginScreen() {
   const [name, setName] = useState("");
   const [pass, setPass] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const err = login(name, pass);
+  const handleLogin = async () => {
+    setLoading(true);
+    const err = await login(name, pass);
     if (err) setError(err);
     else setError("");
+    setLoading(false);
   };
 
   return (
@@ -48,8 +51,12 @@ export default function LoginScreen() {
           {error && (
             <div className="text-destructive text-[13px] mb-2.5 p-2 px-3 bg-destructive/10 rounded-lg">{error}</div>
           )}
-          <button onClick={handleLogin} className="w-full py-3.5 rounded-xl border-none cursor-pointer font-extrabold text-[15px] bg-primary text-primary-foreground active:opacity-80 transition-opacity">
-            Entrar →
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl border-none cursor-pointer font-extrabold text-[15px] bg-primary text-primary-foreground active:opacity-80 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? "Entrando..." : "Entrar →"}
           </button>
         </div>
       </div>
